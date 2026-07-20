@@ -1,0 +1,236 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mysql"
+    url      = env("DATABASE_URL")
+}
+
+model Centro {
+    id         String             @id @default(cuid()) @map("ID_Centro") @db.VarChar(255)
+    nombre     String             @map("Nombre") @db.VarChar(255)
+    estado     Boolean            @default(true) @map("Estado")
+    bodegas    Bodega[]
+    usuarios   Usuario[]
+    entradas   OrdenEntrada[]
+    salidas    OrdenSalida[]
+    encargados EncargadosBodega[]
+    createdAt  DateTime           @default(now()) @map("created_at")
+    updatedAt  DateTime           @updatedAt @map("updated_at")
+
+    @@map("Centro")
+}
+
+model Bodega {
+    id         String             @id @default(cuid()) @map("ID_Bodega") @db.VarChar(255)
+    nombre     String             @map("Bodega") @db.VarChar(255)
+    centroId   String             @map("ID_Centro") @db.VarChar(255)
+    estado     Boolean            @default(true) @map("Estado")
+    centro     Centro             @relation(fields: [centroId], references: [id])
+    usuarios   Usuario[]
+    entradas   OrdenEntrada[]
+    salidas    OrdenSalida[]
+    stocks     Stock[]
+    encargados EncargadosBodega[]
+    createdAt  DateTime           @default(now()) @map("created_at")
+    updatedAt  DateTime           @updatedAt @map("updated_at")
+
+    @@index([centroId])
+    @@map("Bodega")
+}
+
+model Rol {
+    id          String             @id @map("ID_Rol") @db.VarChar(255)
+    descripcion String             @map("Descripcion") @db.VarChar(255)
+    usuarios    Usuario[]
+    encargados  EncargadosBodega[]
+
+    @@map("Rol")
+}
+
+model Usuario {
+    id         String             @id @default(cuid()) @map("ID_User") @db.VarChar(255)
+    nombre     String             @map("Nombre") @db.VarChar(255)
+    apPaterno  String             @map("Ap_Paterno") @db.VarChar(255)
+    apMaterno  String?            @map("Ap_Materno") @db.VarChar(255)
+    rolId      String             @map("Rol") @db.VarChar(255)
+    bodegaId   String?            @map("ID_Bodega") @db.VarChar(255)
+    telefono   String?            @map("Telefono") @db.VarChar(30)
+    email      String             @unique @map("Email") @db.VarChar(255)
+    centroId   String             @map("ID_Centro") @db.VarChar(255)
+    estado     Boolean            @default(true) @map("Estado")
+    rol        Rol                @relation(fields: [rolId], references: [id])
+    bodega     Bodega?            @relation(fields: [bodegaId], references: [id])
+    centro     Centro             @relation(fields: [centroId], references: [id])
+    entradas   OrdenEntrada[]
+    salidas    OrdenSalida[]
+    encargos   EncargadosBodega[] @relation("UsuarioEncargado")
+    logs       Log[]
+    createdAt  DateTime           @default(now()) @map("created_at")
+    updatedAt  DateTime           @updatedAt @map("updated_at")
+
+    @@index([rolId])
+    @@index([centroId])
+    @@index([bodegaId])
+    @@map("Usuario")
+}
+
+model Unidad {
+    id          String     @id @default(cuid()) @map("ID_Unidad") @db.VarChar(255)
+    descripcion String     @unique @map("Descripcion") @db.VarChar(255)
+    productos   Producto[]
+
+    @@map("Unidad")
+}
+
+model Producto {
+    id          Int                   @id @default(autoincrement()) @map("ID_Product")
+    linea       String                @map("Linea") @db.VarChar(255)
+    descripcion String                @map("Descripcion") @db.VarChar(255)
+    unidadId    String?               @map("ID_Unidad") @db.VarChar(255)
+    estado      Boolean               @default(true) @map("Estado")
+    unidad      Unidad?               @relation(fields: [unidadId], references: [id])
+    entradas    OrdenEntradaDetalle[]
+    salidas     OrdenSalidaDetalle[]
+    stocks      Stock[]
+    createdAt   DateTime              @default(now()) @map("created_at")
+    updatedAt   DateTime              @updatedAt @map("updated_at")
+
+    @@index([unidadId])
+    @@map("Producto")
+}
+
+model OrdenEntrada {
+    id              String                @id @default(cuid()) @map("ID_OrdenEntrada") @db.VarChar(255)
+    fecha           DateTime              @map("Fecha") @db.Date
+    usuarioId       String                @map("ID_User") @db.VarChar(255)
+    origen          String                @map("Origen") @db.VarChar(255)
+    guiaDespacho    String?               @map("GuiaDespacho") @db.VarChar(255)
+    centroId        String                @map("ID_Centro") @db.VarChar(255)
+    bodegaId        String                @map("ID_Bodega") @db.VarChar(255)
+    codigoRecepcion String?               @map("Codigo_Recepcion") @db.VarChar(255)
+    usuario         Usuario               @relation(fields: [usuarioId], references: [id])
+    centro          Centro                @relation(fields: [centroId], references: [id])
+    bodega          Bodega                @relation(fields: [bodegaId], references: [id])
+    detalles        OrdenEntradaDetalle[]
+    createdAt       DateTime              @default(now()) @map("created_at")
+    updatedAt       DateTime              @updatedAt @map("updated_at")
+
+    @@index([usuarioId])
+    @@index([centroId])
+    @@index([bodegaId])
+    @@map("OrdenEntrada")
+}
+
+model OrdenEntradaDetalle {
+    id             String       @id @default(cuid()) @map("ID_Entrada") @db.VarChar(255)
+    productoId     Int          @map("ID_Product")
+    categoria      String       @map("Categoria") @db.VarChar(255)
+    fechaCaducidad DateTime     @map("Fecha_Caducidad") @db.Date
+    cantidad       Int          @map("Cantidad")
+    lote           String       @map("Lote") @db.VarChar(255)
+    ordenEntradaId String       @map("ID_OrdenEntrada") @db.VarChar(255)
+    producto       Producto     @relation(fields: [productoId], references: [id])
+    ordenEntrada   OrdenEntrada @relation(fields: [ordenEntradaId], references: [id], onDelete: Cascade)
+    createdAt      DateTime     @default(now()) @map("created_at")
+    updatedAt      DateTime     @updatedAt @map("updated_at")
+
+    @@index([productoId])
+    @@index([ordenEntradaId])
+    @@map("OrdenEntradaDetalle")
+}
+
+model OrdenSalida {
+    id            String               @id @default(cuid()) @map("ID_OrdenSalida") @db.VarChar(255)
+    fecha         DateTime             @map("Fecha") @db.Date
+    usuarioId     String               @map("ID_User") @db.VarChar(255)
+    bodegaId      String               @map("ID_Bodega") @db.VarChar(255)
+    tipoSalida    String               @map("Tipo_Salida") @db.VarChar(255)
+    centroId      String               @map("ID_Centro") @db.VarChar(255)
+    destino       String               @map("Destino") @db.VarChar(255)
+    codigoSalida  String?              @map("Codigo_Salida") @db.VarChar(255)
+    enviarCorreo  Boolean              @default(false) @map("Enviar_Correo")
+    correoDestino String?              @map("Correo_Destino") @db.VarChar(255)
+    usuario       Usuario              @relation(fields: [usuarioId], references: [id])
+    bodega        Bodega               @relation(fields: [bodegaId], references: [id])
+    centro        Centro               @relation(fields: [centroId], references: [id])
+    detalles      OrdenSalidaDetalle[]
+    createdAt     DateTime             @default(now()) @map("created_at")
+    updatedAt     DateTime             @updatedAt @map("updated_at")
+
+    @@index([usuarioId])
+    @@index([bodegaId])
+    @@index([centroId])
+    @@map("OrdenSalida")
+}
+
+model OrdenSalidaDetalle {
+    id             String      @id @default(cuid()) @map("ID_Detalle") @db.VarChar(255)
+    productoId     Int         @map("ID_Product")
+    cantidad       Int         @map("Cantidad")
+    ordenSalidaId  String      @map("ID_OrdenSalida") @db.VarChar(255)
+    lote           String      @map("Lote") @db.VarChar(255)
+    fechaCaducidad DateTime    @map("Fecha_Caducidad") @db.Date
+    producto       Producto    @relation(fields: [productoId], references: [id])
+    ordenSalida    OrdenSalida @relation(fields: [ordenSalidaId], references: [id], onDelete: Cascade)
+    createdAt      DateTime    @default(now()) @map("created_at")
+    updatedAt      DateTime    @updatedAt @map("updated_at")
+
+    @@index([productoId])
+    @@index([ordenSalidaId])
+    @@map("OrdenSalidaDetalle")
+}
+
+model Stock {
+    id                       String   @id @default(cuid()) @map("ID_Stock") @db.VarChar(255)
+    productoId               Int      @map("ID_Product")
+    bodegaId                 String   @map("ID_Bodega") @db.VarChar(255)
+    cantidadDisponible       Int      @default(0) @map("Cantidad_Disponible")
+    fechaUltimaActualizacion DateTime @default(now()) @map("Fecha_Ultima_Actualizacion") @db.Date
+    stockMinimo              Int      @default(0) @map("StockMinimo")
+    lote                     String   @map("Lote") @db.VarChar(255)
+    fechaCaducidad           DateTime @map("Fecha_Caducidad") @db.Date
+    producto                 Producto @relation(fields: [productoId], references: [id])
+    bodega                   Bodega   @relation(fields: [bodegaId], references: [id])
+    createdAt                DateTime @default(now()) @map("created_at")
+    updatedAt                DateTime @updatedAt @map("updated_at")
+
+    @@unique([productoId, bodegaId, lote, fechaCaducidad], name: "stock_lote_unico")
+    @@index([bodegaId])
+    @@map("Stock")
+}
+
+model EncargadosBodega {
+    id          String   @id @default(cuid()) @map("ID_EncargadoBodega") @db.VarChar(255)
+    encargadoId String   @map("ID_Encargado") @db.VarChar(255)
+    centroId    String   @map("ID_Centro") @db.VarChar(255)
+    bodegaId    String   @map("ID_Bodega") @db.VarChar(255)
+    rolId       String   @map("Rol_Enc") @db.VarChar(255)
+    email       String   @map("email_Enc") @db.VarChar(255)
+    usuario     Usuario  @relation("UsuarioEncargado", fields: [encargadoId], references: [id])
+    centro      Centro   @relation(fields: [centroId], references: [id])
+    bodega      Bodega   @relation(fields: [bodegaId], references: [id])
+    rol         Rol      @relation(fields: [rolId], references: [id])
+    createdAt   DateTime @default(now()) @map("created_at")
+
+    @@unique([encargadoId, centroId, bodegaId])
+    @@index([centroId])
+    @@index([bodegaId])
+    @@index([rolId])
+    @@map("Encargados_Bodegas")
+}
+
+model Log {
+    id        String   @id @default(cuid()) @map("ID_Log") @db.VarChar(255)
+    usuarioId String?  @map("ID_User") @db.VarChar(255)
+    accion    String   @map("Accion") @db.VarChar(255)
+    entidad   String   @map("Entidad") @db.VarChar(255)
+    entidadId String?  @map("Entidad_ID") @db.VarChar(255)
+    detalle   Json?    @map("Detalle")
+    usuario   Usuario? @relation(fields: [usuarioId], references: [id])
+    createdAt DateTime @default(now()) @map("created_at")
+
+    @@index([usuarioId])
+    @@map("logs")
+}

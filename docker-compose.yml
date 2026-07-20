@@ -1,0 +1,22 @@
+services:
+    mysql:
+        image: mysql:8.4
+        container_name: inventario-mysql
+        restart: unless-stopped
+        environment:
+            MYSQL_DATABASE: inventario
+            MYSQL_USER: inventario
+            MYSQL_PASSWORD: inventario
+            MYSQL_ROOT_PASSWORD: inventario_root
+        ports:
+            - "3308:3306"
+        volumes:
+            - inventario_mysql_data:/var/lib/mysql
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+            interval: 10s
+            timeout: 5s
+            retries: 10
+
+volumes:
+    inventario_mysql_data:

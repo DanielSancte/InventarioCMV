@@ -1,0 +1,55 @@
+{
+    "name": "inventario",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "next lint",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "db:generate": "prisma generate",
+        "db:push": "prisma db push",
+        "db:seed": "tsx prisma/seed.ts",
+        "db:studio": "prisma studio",
+        "services:up": "docker compose up -d",
+        "services:down": "docker compose down"
+    },
+    "dependencies": {
+        "@hookform/resolvers": "^3.10.0",
+        "@prisma/client": "^6.12.0",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "lucide-react": "^0.468.0",
+        "next": "^15.0.0",
+        "next-auth": "^5.0.0-beta.25",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "react-hook-form": "^7.54.2",
+        "sonner": "^1.7.1",
+        "tailwind-merge": "^2.6.0",
+        "zod": "^3.24.1"
+    },
+    "devDependencies": {
+        "@testing-library/jest-dom": "^6.6.3",
+        "@testing-library/react": "^16.1.0",
+        "@testing-library/user-event": "^14.5.2",
+        "@types/node": "^22.10.2",
+        "@types/react": "^19.0.2",
+        "@types/react-dom": "^19.0.2",
+        "autoprefixer": "^10.4.20",
+        "eslint": "^9.17.0",
+        "eslint-config-next": "^15.0.0",
+        "jsdom": "^25.0.1",
+        "postcss": "^8.4.49",
+        "prisma": "^6.12.0",
+        "tailwindcss": "^3.4.17",
+        "tsx": "^4.19.2",
+        "typescript": "^5.7.2",
+        "vitest": "^2.1.8"
+    },
+    "prisma": {
+        "seed": "tsx prisma/seed.ts"
+    }
+}
