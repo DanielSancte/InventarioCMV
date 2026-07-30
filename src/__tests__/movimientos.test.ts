@@ -17,12 +17,12 @@ describe("movimientos de stock", () => {
     });
 
     it("valida salidas solo dentro de los ultimos 7 dias", () => {
-        const hoy = new Date("2026-07-20T12:00:00.000Z");
+        const hoy = new Date(2026, 6, 20, 12);
 
-        expect(validarFechaSalida(new Date("2026-07-20T00:00:00.000Z"), hoy)).toBe(true);
-        expect(validarFechaSalida(new Date("2026-07-13T00:00:00.000Z"), hoy)).toBe(true);
-        expect(validarFechaSalida(new Date("2026-07-12T00:00:00.000Z"), hoy)).toBe(false);
-        expect(validarFechaSalida(new Date("2026-07-21T00:00:00.000Z"), hoy)).toBe(false);
+        expect(validarFechaSalida(new Date(2026, 6, 20), hoy)).toBe(true);
+        expect(validarFechaSalida(new Date(2026, 6, 13), hoy)).toBe(true);
+        expect(validarFechaSalida(new Date(2026, 6, 12), hoy)).toBe(false);
+        expect(validarFechaSalida(new Date(2026, 6, 21), hoy)).toBe(false);
     });
 
     it("clasifica alertas de stock y caducidad", () => {

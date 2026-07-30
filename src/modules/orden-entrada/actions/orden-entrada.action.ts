@@ -9,7 +9,7 @@ import { AuditLogger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 
 // schemas
-import { crearOrdenEntradaSchema, ordenEntradaDetalleSchema } from "@/modules/orden-entrada/schemas/orden-entrada.schema";
+import { crearOrdenEntradaSchema, ordenEntradaDetalleFormSchema } from "@/modules/orden-entrada/schemas/orden-entrada.schema";
 
 // types
 import type { ActionState } from "@/shared/types/action-state";
@@ -18,7 +18,6 @@ type Tx = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction"
 
 interface DetalleEntradaForm {
     productoId: number;
-    categoria: string;
     fechaCaducidad: Date;
     cantidad: number;
     lote: string;
@@ -54,6 +53,7 @@ export async function crearOrdenEntrada(prevState: ActionState, formData: FormDa
             codigoRecepcion: formData.get("codigoRecepcion")?.toString() || undefined,
             detalles: leerDetallesEntrada(formData)
         });
+        const categoriasPorProducto = await obtenerCategoriasProductos(parsed.detalles.map((detalle) => detalle.productoId));
 
         const orden = await prisma.$transaction(async (tx) => {
             const nuevaOrden = await tx.ordenEntrada.create({
@@ -69,9 +69,14 @@ export async function crearOrdenEntrada(prevState: ActionState, formData: FormDa
             });
 
             for (const detalle of parsed.detalles) {
+                const categoria = categoriasPorProducto.get(detalle.productoId);
+                if (!categoria) {
+                    throw new Error("Uno de los productos seleccionados no existe o esta inactivo.");
+                }
                 await tx.ordenEntradaDetalle.create({
                     data: {
                         ...detalle,
+                        categoria,
                         ordenEntradaId: nuevaOrden.id
                     }
                 });
@@ -111,13 +116,17 @@ export async function actualizarDetalleEntrada(detalleId: string, formData: Form
             return { ok: false, message: "No tienes permiso para editar entradas." };
         }
 
-        const parsed = ordenEntradaDetalleSchema.parse({
+        const parsed = ordenEntradaDetalleFormSchema.parse({
             productoId: formData.get("productoId"),
-            categoria: formData.get("categoria"),
             fechaCaducidad: formData.get("fechaCaducidad"),
             cantidad: formData.get("cantidad"),
             lote: formData.get("lote")
         });
+        const categoriasPorProducto = await obtenerCategoriasProductos([parsed.productoId]);
+        const categoria = categoriasPorProducto.get(parsed.productoId);
+        if (!categoria) {
+            return { ok: false, message: "El producto seleccionado no existe o esta inactivo." };
+        }
 
         await prisma.$transaction(async (tx) => {
             const previo = await tx.ordenEntradaDetalle.findUniqueOrThrow({
@@ -131,7 +140,7 @@ export async function actualizarDetalleEntrada(detalleId: string, formData: Form
                 lote: previo.lote,
                 fechaCaducidad: previo.fechaCaducidad
             });
-            await tx.ordenEntradaDetalle.update({ where: { id: detalleId }, data: parsed });
+            await tx.ordenEntradaDetalle.update({ where: { id: detalleId }, data: { ...parsed, categoria } });
             await aplicarEntradaStock(tx, {
                 productoId: parsed.productoId,
                 bodegaId: previo.ordenEntrada.bodegaId,
@@ -182,15 +191,32 @@ export async function eliminarDetalleEntrada(detalleId: string): Promise<ActionS
 }
 
 function leerDetallesEntrada(formData: FormData): DetalleEntradaForm[] {
-    return [
-        {
-            productoId: Number(formData.get("productoId")),
-            categoria: formData.get("categoria")?.toString() ?? "",
-            fechaCaducidad: new Date(formData.get("fechaCaducidad")?.toString() ?? ""),
-            cantidad: Number(formData.get("cantidad")),
-            lote: formData.get("lote")?.toString() ?? ""
+    const productos = formData.getAll("productoId");
+    const cantidades = formData.getAll("cantidad");
+    const lotes = formData.getAll("lote");
+    const caducidades = formData.getAll("fechaCaducidad");
+
+    return productos.map((productoId, index) => ({
+        productoId: Number(productoId),
+        fechaCaducidad: new Date(caducidades[index]?.toString() ?? ""),
+        cantidad: Number(cantidades[index]),
+        lote: lotes[index]?.toString() ?? ""
+    }));
+}
+
+async function obtenerCategoriasProductos(productoIds: number[]): Promise<Map<number, string>> {
+    const productos = await prisma.producto.findMany({
+        where: {
+            id: { in: [...new Set(productoIds)] },
+            estado: true
+        },
+        select: {
+            id: true,
+            linea: true
         }
-    ];
+    });
+
+    return new Map(productos.map((producto) => [producto.id, producto.linea]));
 }
 
 async function aplicarEntradaStock(

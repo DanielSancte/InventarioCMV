@@ -51,13 +51,13 @@ async function main(): Promise<void> {
         }
     });
 
-    const unidadCaja = await prisma.unidad.upsert({
+    await prisma.unidad.upsert({
         where: { descripcion: "Caja" },
         update: {},
         create: { descripcion: "Caja" }
     });
 
-    const unidadUnidad = await prisma.unidad.upsert({
+    await prisma.unidad.upsert({
         where: { descripcion: "Unidad" },
         update: {},
         create: { descripcion: "Unidad" }
@@ -68,14 +68,12 @@ async function main(): Promise<void> {
         update: {
             linea: "CLINICO",
             descripcion: "Guantes de procedimiento M",
-            unidadId: unidadCaja.id,
             estado: true
         },
         create: {
             id: 1,
             linea: "CLINICO",
             descripcion: "Guantes de procedimiento M",
-            unidadId: unidadCaja.id,
             estado: true
         }
     });
@@ -85,14 +83,12 @@ async function main(): Promise<void> {
         update: {
             linea: "CLINICO",
             descripcion: "Alcohol gel 1 litro",
-            unidadId: unidadUnidad.id,
             estado: true
         },
         create: {
             id: 2,
             linea: "CLINICO",
             descripcion: "Alcohol gel 1 litro",
-            unidadId: unidadUnidad.id,
             estado: true
         }
     });
@@ -102,14 +98,12 @@ async function main(): Promise<void> {
         update: {
             linea: "ASEO",
             descripcion: "Cloro concentrado 5 litros",
-            unidadId: unidadUnidad.id,
             estado: true
         },
         create: {
             id: 3,
             linea: "ASEO",
             descripcion: "Cloro concentrado 5 litros",
-            unidadId: unidadUnidad.id,
             estado: true
         }
     });

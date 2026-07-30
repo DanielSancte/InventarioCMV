@@ -2,7 +2,6 @@
 
 import type * as React from "react";
 import { useActionState } from "react";
-import type { Unidad } from "@prisma/client";
 
 // actions
 import { crearProducto } from "@/modules/productos/actions/productos.action";
@@ -16,7 +15,7 @@ import { Select } from "@/shared/components/ui/select";
 // types
 import { initialActionState } from "@/shared/types/action-state";
 
-export function ProductoForm({ unidades }: { unidades: Unidad[] }): React.ReactElement {
+export function ProductoForm(): React.ReactElement {
     const [state, formAction] = useActionState(crearProducto, initialActionState);
 
     return (
@@ -29,17 +28,6 @@ export function ProductoForm({ unidades }: { unidades: Unidad[] }): React.ReactE
                 </Select>
             </label>
             <label className="space-y-1 text-sm">
-                <span>Unidad</span>
-                <Select name="unidadId" defaultValue="">
-                    <option value="">Sin unidad</option>
-                    {unidades.map((unidad) => (
-                        <option key={unidad.id} value={unidad.id}>
-                            {unidad.descripcion}
-                        </option>
-                    ))}
-                </Select>
-            </label>
-            <label className="space-y-1 text-sm md:col-span-2">
                 <span>Descripcion</span>
                 <Input name="descripcion" required minLength={3} placeholder="Nombre del producto" />
             </label>

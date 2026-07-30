@@ -1,4 +1,5 @@
 // lib
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 
 export interface AuditInput {
@@ -6,7 +7,7 @@ export interface AuditInput {
     accion: string;
     entidad: string;
     entidadId?: string;
-    detalle?: Record<string, unknown>;
+    detalle?: Prisma.InputJsonValue;
 }
 
 export class AuditLogger {

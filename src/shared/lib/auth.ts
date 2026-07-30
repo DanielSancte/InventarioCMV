@@ -34,7 +34,7 @@ export async function requireSessionUser(): Promise<SessionUser> {
     return {
         id: usuario.id,
         nombre: usuario.nombre,
-        apPaterno: usuario.apPaterno,
+        apPaterno: usuario.apPaterno ?? "",
         email: usuario.email,
         rol: usuario.rolId,
         centroId: usuario.centroId,

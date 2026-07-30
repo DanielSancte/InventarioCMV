@@ -15,7 +15,6 @@ import type { ActionState } from "@/shared/types/action-state";
 
 export async function listarProductos() {
     return prisma.producto.findMany({
-        include: { unidad: true },
         orderBy: [{ linea: "asc" }, { descripcion: "asc" }]
     });
 }
@@ -30,7 +29,6 @@ export async function crearProducto(prevState: ActionState, formData: FormData):
         const parsed = productoSchema.parse({
             linea: formData.get("linea"),
             descripcion: formData.get("descripcion"),
-            unidadId: formData.get("unidadId")?.toString() || undefined,
             estado: formData.get("estado") === "on"
         });
 
@@ -43,6 +41,3 @@ export async function crearProducto(prevState: ActionState, formData: FormData):
     }
 }
 
-export async function listarUnidades() {
-    return prisma.unidad.findMany({ orderBy: { descripcion: "asc" } });
-}

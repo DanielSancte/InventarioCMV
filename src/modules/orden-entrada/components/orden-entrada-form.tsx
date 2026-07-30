@@ -8,6 +8,7 @@ import type { Bodega, Centro, Producto } from "@prisma/client";
 import { crearOrdenEntrada } from "@/modules/orden-entrada/actions/orden-entrada.action";
 
 // components
+import { OrdenEntradaDetallesField } from "@/modules/orden-entrada/components/orden-entrada-detalles-field";
 import { ActionMessage } from "@/shared/components/ui/action-message";
 import { FormSubmit } from "@/shared/components/ui/form-submit";
 import { Input } from "@/shared/components/ui/input";
@@ -74,37 +75,7 @@ export function OrdenEntradaForm({
             </label>
             <div className="border-t pt-3 md:col-span-3">
                 <p className="mb-3 text-sm font-medium">Detalle</p>
-                <div className="grid gap-3 md:grid-cols-5">
-                    <label className="space-y-1 text-sm md:col-span-2">
-                        <span>Producto</span>
-                        <Select name="productoId" required>
-                            {productos.map((producto) => (
-                                <option key={producto.id} value={producto.id}>
-                                    {producto.descripcion}
-                                </option>
-                            ))}
-                        </Select>
-                    </label>
-                    <label className="space-y-1 text-sm">
-                        <span>Categoria</span>
-                        <Select name="categoria" required defaultValue="CLINICO">
-                            <option value="CLINICO">Clinico</option>
-                            <option value="ASEO">Aseo</option>
-                        </Select>
-                    </label>
-                    <label className="space-y-1 text-sm">
-                        <span>Cantidad</span>
-                        <Input type="number" name="cantidad" min={1} defaultValue={1} required />
-                    </label>
-                    <label className="space-y-1 text-sm">
-                        <span>Lote</span>
-                        <Input name="lote" minLength={3} required placeholder="L-001" />
-                    </label>
-                    <label className="space-y-1 text-sm">
-                        <span>Caducidad</span>
-                        <Input type="date" name="fechaCaducidad" required />
-                    </label>
-                </div>
+                <OrdenEntradaDetallesField productos={productos} />
             </div>
             <div className="flex items-center gap-3 md:col-span-3">
                 <FormSubmit label="Registrar entrada" />

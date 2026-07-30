@@ -1,7 +1,7 @@
 import type * as React from "react";
 
 // actions
-import { listarProductos, listarUnidades } from "@/modules/productos/actions/productos.action";
+import { listarProductos } from "@/modules/productos/actions/productos.action";
 
 // components
 import { ProductoForm } from "@/modules/productos/components/producto-form";
@@ -13,7 +13,7 @@ import { AppLayout } from "@/shared/components/layout/app-layout";
 export const dynamic = "force-dynamic";
 
 export default async function ProductosPage(): Promise<React.ReactElement> {
-    const [productos, unidades] = await Promise.all([listarProductos(), listarUnidades()]);
+    const productos = await listarProductos();
 
     return (
         <AppLayout>
@@ -27,7 +27,7 @@ export default async function ProductosPage(): Promise<React.ReactElement> {
                         <CardTitle>Nuevo producto</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ProductoForm unidades={unidades} />
+                        <ProductoForm />
                     </CardContent>
                 </Card>
                 <Card>
@@ -41,7 +41,6 @@ export default async function ProductosPage(): Promise<React.ReactElement> {
                                     <Th>ID</Th>
                                     <Th>Linea</Th>
                                     <Th>Descripcion</Th>
-                                    <Th>Unidad</Th>
                                     <Th>Estado</Th>
                                 </tr>
                             </thead>
@@ -51,7 +50,6 @@ export default async function ProductosPage(): Promise<React.ReactElement> {
                                         <Td>{producto.id}</Td>
                                         <Td>{producto.linea}</Td>
                                         <Td>{producto.descripcion}</Td>
-                                        <Td>{producto.unidad?.descripcion ?? "Sin unidad"}</Td>
                                         <Td>
                                             <Badge tone={producto.estado ? "success" : "muted"}>
                                                 {producto.estado ? "Activo" : "Inactivo"}

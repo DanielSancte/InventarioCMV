@@ -185,14 +185,17 @@ export async function eliminarDetalleSalida(detalleId: string): Promise<ActionSt
 }
 
 function leerDetallesSalida(formData: FormData): DetalleSalidaForm[] {
-    return [
-        {
-            productoId: Number(formData.get("productoId")),
-            cantidad: Number(formData.get("cantidad")),
-            lote: formData.get("lote")?.toString() ?? "",
-            fechaCaducidad: new Date(formData.get("fechaCaducidad")?.toString() ?? "")
-        }
-    ];
+    const productos = formData.getAll("productoId");
+    const cantidades = formData.getAll("cantidad");
+    const lotes = formData.getAll("lote");
+    const caducidades = formData.getAll("fechaCaducidad");
+
+    return productos.map((productoId, index) => ({
+        productoId: Number(productoId),
+        cantidad: Number(cantidades[index]),
+        lote: lotes[index]?.toString() ?? "",
+        fechaCaducidad: new Date(caducidades[index]?.toString() ?? "")
+    }));
 }
 
 async function descontarStock(

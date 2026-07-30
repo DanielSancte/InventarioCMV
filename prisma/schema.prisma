@@ -16,8 +16,6 @@ model Centro {
     entradas   OrdenEntrada[]
     salidas    OrdenSalida[]
     encargados EncargadosBodega[]
-    createdAt  DateTime           @default(now()) @map("created_at")
-    updatedAt  DateTime           @updatedAt @map("updated_at")
 
     @@map("Centro")
 }
@@ -33,8 +31,6 @@ model Bodega {
     salidas    OrdenSalida[]
     stocks     Stock[]
     encargados EncargadosBodega[]
-    createdAt  DateTime           @default(now()) @map("created_at")
-    updatedAt  DateTime           @updatedAt @map("updated_at")
 
     @@index([centroId])
     @@map("Bodega")
@@ -52,7 +48,7 @@ model Rol {
 model Usuario {
     id         String             @id @default(cuid()) @map("ID_User") @db.VarChar(255)
     nombre     String             @map("Nombre") @db.VarChar(255)
-    apPaterno  String             @map("Ap_Paterno") @db.VarChar(255)
+    apPaterno  String?            @map("Ap_Paterno") @db.VarChar(255)
     apMaterno  String?            @map("Ap_Materno") @db.VarChar(255)
     rolId      String             @map("Rol") @db.VarChar(255)
     bodegaId   String?            @map("ID_Bodega") @db.VarChar(255)
@@ -67,8 +63,6 @@ model Usuario {
     salidas    OrdenSalida[]
     encargos   EncargadosBodega[] @relation("UsuarioEncargado")
     logs       Log[]
-    createdAt  DateTime           @default(now()) @map("created_at")
-    updatedAt  DateTime           @updatedAt @map("updated_at")
 
     @@index([rolId])
     @@index([centroId])
@@ -79,7 +73,6 @@ model Usuario {
 model Unidad {
     id          String     @id @default(cuid()) @map("ID_Unidad") @db.VarChar(255)
     descripcion String     @unique @map("Descripcion") @db.VarChar(255)
-    productos   Producto[]
 
     @@map("Unidad")
 }
@@ -88,16 +81,11 @@ model Producto {
     id          Int                   @id @default(autoincrement()) @map("ID_Product")
     linea       String                @map("Linea") @db.VarChar(255)
     descripcion String                @map("Descripcion") @db.VarChar(255)
-    unidadId    String?               @map("ID_Unidad") @db.VarChar(255)
     estado      Boolean               @default(true) @map("Estado")
-    unidad      Unidad?               @relation(fields: [unidadId], references: [id])
     entradas    OrdenEntradaDetalle[]
     salidas     OrdenSalidaDetalle[]
     stocks      Stock[]
-    createdAt   DateTime              @default(now()) @map("created_at")
-    updatedAt   DateTime              @updatedAt @map("updated_at")
 
-    @@index([unidadId])
     @@map("Producto")
 }
 
@@ -114,8 +102,6 @@ model OrdenEntrada {
     centro          Centro                @relation(fields: [centroId], references: [id])
     bodega          Bodega                @relation(fields: [bodegaId], references: [id])
     detalles        OrdenEntradaDetalle[]
-    createdAt       DateTime              @default(now()) @map("created_at")
-    updatedAt       DateTime              @updatedAt @map("updated_at")
 
     @@index([usuarioId])
     @@index([centroId])
@@ -133,8 +119,6 @@ model OrdenEntradaDetalle {
     ordenEntradaId String       @map("ID_OrdenEntrada") @db.VarChar(255)
     producto       Producto     @relation(fields: [productoId], references: [id])
     ordenEntrada   OrdenEntrada @relation(fields: [ordenEntradaId], references: [id], onDelete: Cascade)
-    createdAt      DateTime     @default(now()) @map("created_at")
-    updatedAt      DateTime     @updatedAt @map("updated_at")
 
     @@index([productoId])
     @@index([ordenEntradaId])
@@ -156,8 +140,6 @@ model OrdenSalida {
     bodega        Bodega               @relation(fields: [bodegaId], references: [id])
     centro        Centro               @relation(fields: [centroId], references: [id])
     detalles      OrdenSalidaDetalle[]
-    createdAt     DateTime             @default(now()) @map("created_at")
-    updatedAt     DateTime             @updatedAt @map("updated_at")
 
     @@index([usuarioId])
     @@index([bodegaId])
@@ -174,8 +156,6 @@ model OrdenSalidaDetalle {
     fechaCaducidad DateTime    @map("Fecha_Caducidad") @db.Date
     producto       Producto    @relation(fields: [productoId], references: [id])
     ordenSalida    OrdenSalida @relation(fields: [ordenSalidaId], references: [id], onDelete: Cascade)
-    createdAt      DateTime    @default(now()) @map("created_at")
-    updatedAt      DateTime    @updatedAt @map("updated_at")
 
     @@index([productoId])
     @@index([ordenSalidaId])
@@ -187,14 +167,12 @@ model Stock {
     productoId               Int      @map("ID_Product")
     bodegaId                 String   @map("ID_Bodega") @db.VarChar(255)
     cantidadDisponible       Int      @default(0) @map("Cantidad_Disponible")
-    fechaUltimaActualizacion DateTime @default(now()) @map("Fecha_Ultima_Actualizacion") @db.Date
+    fechaUltimaActualizacion DateTime @default(now()) @map("Fecha_Ultima_Actualizacion")
     stockMinimo              Int      @default(0) @map("StockMinimo")
     lote                     String   @map("Lote") @db.VarChar(255)
     fechaCaducidad           DateTime @map("Fecha_Caducidad") @db.Date
     producto                 Producto @relation(fields: [productoId], references: [id])
     bodega                   Bodega   @relation(fields: [bodegaId], references: [id])
-    createdAt                DateTime @default(now()) @map("created_at")
-    updatedAt                DateTime @updatedAt @map("updated_at")
 
     @@unique([productoId, bodegaId, lote, fechaCaducidad], name: "stock_lote_unico")
     @@index([bodegaId])
@@ -212,7 +190,6 @@ model EncargadosBodega {
     centro      Centro   @relation(fields: [centroId], references: [id])
     bodega      Bodega   @relation(fields: [bodegaId], references: [id])
     rol         Rol      @relation(fields: [rolId], references: [id])
-    createdAt   DateTime @default(now()) @map("created_at")
 
     @@unique([encargadoId, centroId, bodegaId])
     @@index([centroId])
@@ -229,7 +206,6 @@ model Log {
     entidadId String?  @map("Entidad_ID") @db.VarChar(255)
     detalle   Json?    @map("Detalle")
     usuario   Usuario? @relation(fields: [usuarioId], references: [id])
-    createdAt DateTime @default(now()) @map("created_at")
 
     @@index([usuarioId])
     @@map("logs")
