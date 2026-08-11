@@ -1,9 +1,11 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import NextAuth from "next-auth";
 
-export function middleware(_request: NextRequest): NextResponse {
-    return NextResponse.next();
-}
+// config
+import { authConfig } from "@/auth.config";
+
+// Se instancia NextAuth solo con la configuracion edge-safe: el middleware no puede
+// cargar Prisma. La verificacion contra la base de datos ocurre en src/auth.ts.
+export const { auth: middleware } = NextAuth(authConfig);
 
 export const config = {
     matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"]

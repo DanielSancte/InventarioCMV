@@ -151,6 +151,47 @@ async function main(): Promise<void> {
         }
     });
 
+    // Administradores institucionales habilitados para el login con Google.
+    // Solo se aceptan correos del dominio @cmvalparaiso.cl (ver src/config/auth.ts).
+    const administradores = [
+        {
+            id: "usuario-admin-rvergara",
+            nombre: "Renzo",
+            apPaterno: "Vergara",
+            email: "rvergara@cmvalparaiso.cl"
+        },
+        {
+            id: "usuario-admin-dsantibanez",
+            nombre: "Daniel",
+            apPaterno: "Santibanez",
+            email: "dsantibanez@cmvalparaiso.cl"
+        }
+    ];
+
+    for (const administrador of administradores) {
+        await prisma.usuario.upsert({
+            where: { email: administrador.email },
+            update: {
+                nombre: administrador.nombre,
+                apPaterno: administrador.apPaterno,
+                rolId: "R01",
+                centroId: centro.id,
+                bodegaId: bodegaClinica.id,
+                estado: true
+            },
+            create: {
+                id: administrador.id,
+                nombre: administrador.nombre,
+                apPaterno: administrador.apPaterno,
+                rolId: "R01",
+                bodegaId: bodegaClinica.id,
+                email: administrador.email,
+                centroId: centro.id,
+                estado: true
+            }
+        });
+    }
+
     const stocks = [
         {
             productoId: guantes.id,

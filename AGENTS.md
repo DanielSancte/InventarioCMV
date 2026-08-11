@@ -56,9 +56,11 @@ Modulos: `stock`, `vista de productos`, `reporte`, `orden de entrada`, `orden de
 
 ## Auth
 
-- NextAuth v5 Google. Split config: `auth.config.ts` (edge-safe, sin Prisma) + `auth.ts` (callbacks con Prisma).
-- `signIn` solo permite emails que existan en `funcionarios` con `estado = 'Activo'`.
-- La sesion expone `ID_User`, `nombre`,`Ap_Paterno` , `rol`, `menu`; el acceso por rol se deriva del menu cargado.
+- NextAuth v5 Google (sesion JWT, sin adapter Prisma). Split config: `auth.config.ts` (edge-safe, sin Prisma) + `auth.ts` (callbacks con Prisma).
+- `signIn` exige dominio `@cmvalparaiso.cl`, que el email exista en `Usuario` y que `Estado = true`.
+- La sesion expone `id`, `nombre`, `apPaterno`, `email`, `rol`, `centroId`, `bodegaId` via `obtenerSessionUser` / `requireSessionUser` (`src/shared/lib/auth.ts`), que revalidan contra la base en cada llamada.
+- Constantes en `src/config/auth.ts`; UI de acceso en `src/modules/auth` y `src/app/auth/login`.
+- Spec: `docs/specs/spec-autenticacion-google.md`.
 
 ## Datos y reglas de negocio
 
