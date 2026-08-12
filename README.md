@@ -4,11 +4,14 @@ MVP local para gestionar stock, productos, ordenes de entrada, ordenes de salida
 
 ## Inicio local
 
-1. Copiar variables:
+1. Copiar variables y completar credenciales:
 
 ```powershell
 Copy-Item .env.example .env
+npx auth secret   # genera AUTH_SECRET
 ```
+
+Completar en `.env` el `AUTH_GOOGLE_ID` y `AUTH_GOOGLE_SECRET` entregados por Google Cloud.
 
 2. Levantar MySQL y preparar base:
 
@@ -27,9 +30,19 @@ npm run dev
 
 La app queda en `http://localhost:3000`.
 
-## Sesion local
+## Autenticacion
 
-El MVP usa `DEMO_USER_EMAIL=admin@cmv.local` para simular una sesion activa. Ese usuario se crea con `npm run db:seed` y tiene rol `R01`.
+El acceso es exclusivamente con Google (NextAuth v5). Reglas aplicadas en cada inicio de sesion:
+
+1. Solo correos del dominio `@cmvalparaiso.cl` (las cuentas `@gmail.com` u otros dominios se rechazan).
+2. El correo debe existir en la tabla `Usuario`.
+3. El usuario debe estar con `Estado = true`.
+
+`npm run db:seed` deja habilitados como administradores (`R01`) a `rvergara@cmvalparaiso.cl` y `dsantibanez@cmvalparaiso.cl`.
+
+En Google Cloud debe estar registrada la redirect URI `http://localhost:3000/api/auth/callback/google`.
+
+Detalle completo en [`docs/specs/spec-autenticacion-google.md`](docs/specs/spec-autenticacion-google.md).
 
 ## Reglas implementadas
 

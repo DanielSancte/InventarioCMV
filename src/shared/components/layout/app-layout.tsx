@@ -1,10 +1,20 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Archive, Boxes, ClipboardList, FileBarChart, Package, Settings } from "lucide-react";
 import type * as React from "react";
 import type { ReactNode } from "react";
 
+// config
+import { RUTA_LOGIN } from "@/config/auth";
+
+// actions
+import { cerrarSesion } from "@/modules/auth/actions/auth.action";
+
+// components
+import { BotonCerrarSesion } from "@/modules/auth/components/boton-cerrar-sesion";
+
 // lib
-import { requireSessionUser } from "@/shared/lib/auth";
+import { obtenerSessionUser } from "@/shared/lib/auth";
 
 const navItems = [
     { href: "/", label: "Resumen", icon: Boxes },
@@ -17,7 +27,11 @@ const navItems = [
 ];
 
 export async function AppLayout({ children }: { children: ReactNode }): Promise<React.ReactElement> {
-    const user = await requireSessionUser();
+    const user = await obtenerSessionUser();
+
+    if (!user) {
+        redirect(RUTA_LOGIN);
+    }
 
     return (
         <div className="min-h-screen bg-background text-foreground">
@@ -43,17 +57,26 @@ export async function AppLayout({ children }: { children: ReactNode }): Promise<
                 <header className="sticky top-0 z-10 border-b bg-background/95 px-4 py-3 backdrop-blur lg:px-8">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                            <p className="text-xs uppercase text-muted-foreground">Sesion local</p>
+                            <p className="text-xs uppercase text-muted-foreground">{user.email}</p>
                             <p className="text-sm font-medium">
                                 {user.nombre} {user.apPaterno} · {user.rol}
                             </p>
                         </div>
-                        <div className="flex gap-2 lg:hidden">
-                            {navItems.slice(1, 5).map((item) => (
-                                <Link key={item.href} href={item.href} className="rounded-md border px-2 py-1 text-xs">
-                                    {item.label}
-                                </Link>
-                            ))}
+                        <div className="flex items-center gap-2">
+                            <div className="flex gap-2 lg:hidden">
+                                {navItems.slice(1, 5).map((item) => (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        className="rounded-md border px-2 py-1 text-xs"
+                                    >
+                                        {item.label}
+                                    </Link>
+                                ))}
+                            </div>
+                            <form action={cerrarSesion}>
+                                <BotonCerrarSesion />
+                            </form>
                         </div>
                     </div>
                 </header>
