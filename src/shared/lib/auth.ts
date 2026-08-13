@@ -77,7 +77,7 @@ export function puedeAdministrar(rol: string): boolean {
 }
 
 export function puedeOperarEntrada(rol: string): boolean {
-    return [ROL_ADMINISTRADOR, "R03", "R06"].includes(rol);
+    return [ROL_ADMINISTRADOR, "R03", "R06", "R07"].includes(rol);
 }
 
 export function puedeOperarSalida(rol: string): boolean {

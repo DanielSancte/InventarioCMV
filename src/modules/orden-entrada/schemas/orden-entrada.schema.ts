@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+// utils
+import { validarFechaOrdenEntrada } from "@/modules/stock/utils/movimientos";
+
 function esFechaHoyOFutura(fecha: Date): boolean {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -21,7 +24,9 @@ export const ordenEntradaDetalleSchema = z.object({
 export const ordenEntradaDetalleFormSchema = ordenEntradaDetalleSchema.omit({ categoria: true });
 
 export const crearOrdenEntradaSchema = z.object({
-    fecha: z.coerce.date(),
+    fecha: z.coerce.date().refine((fecha) => validarFechaOrdenEntrada(fecha), {
+        message: "La fecha de entrada debe estar entre hoy y los ultimos 7 dias."
+    }),
     origen: z.string().min(1, "El origen es requerido."),
     guiaDespacho: z.string().optional(),
     centroId: z.string().min(1),
