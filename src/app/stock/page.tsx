@@ -1,74 +1,67 @@
 import type * as React from "react";
 
 // actions
-import { listarStock } from "@/modules/stock/actions/stock.action";
+import { listarStockConsolidado, type SortDirection, type StockSortKey } from "@/modules/stock/actions/stock.action";
 
 // components
-import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
-import { Td, Th, Table } from "@/shared/components/ui/table";
+import { InventarioFiltros } from "@/shared/components/inventario/inventario-filtros";
 import { AppLayout } from "@/shared/components/layout/app-layout";
-
-// utils
-import { formatDate, formatNumber } from "@/shared/utils/format";
-import { evaluarAlertaStock } from "@/modules/stock/utils/movimientos";
+import { StockTable } from "@/modules/stock/components/stock-table";
 
 export const dynamic = "force-dynamic";
 
-export default async function StockPage(): Promise<React.ReactElement> {
-    const stocks = await listarStock();
+interface StockPageProps {
+    searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}
+
+export default async function StockPage({ searchParams }: StockPageProps): Promise<React.ReactElement> {
+    const params = await searchParams;
+    const data = await listarStockConsolidado({
+        centroId: obtenerParam(params, "centroId"),
+        bodegaId: obtenerParam(params, "bodegaId"),
+        busqueda: obtenerParam(params, "q"),
+        sort: obtenerSort(obtenerParam(params, "sort")),
+        direction: obtenerDirection(obtenerParam(params, "direction"))
+    });
 
     return (
         <AppLayout>
             <div className="space-y-6">
                 <div>
-                    <p className="text-sm text-muted-foreground">Inventario por producto, bodega, lote y caducidad</p>
+                    <p className="text-sm text-muted-foreground">Inventario consolidado por producto y bodega</p>
                     <h2 className="text-2xl font-semibold">Stock</h2>
                 </div>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Filtros</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <InventarioFiltros
+                            action="/stock"
+                            centros={data.centros}
+                            bodegas={data.bodegas}
+                            centroId={data.centroId}
+                            bodegaId={data.bodegaId}
+                            puedeFiltrarCentro={data.puedeFiltrarCentro}
+                            busqueda={data.busqueda}
+                            mostrarBusqueda
+                        />
+                    </CardContent>
+                </Card>
                 <Card>
                     <CardHeader>
                         <CardTitle>Existencias</CardTitle>
                     </CardHeader>
                     <CardContent className="overflow-x-auto">
-                        <Table>
-                            <thead>
-                                <tr>
-                                    <Th>Centro</Th>
-                                    <Th>Bodega</Th>
-                                    <Th>Producto</Th>
-                                    <Th>Linea</Th>
-                                    <Th>Lote</Th>
-                                    <Th>Caducidad</Th>
-                                    <Th>Disponible</Th>
-                                    <Th>Minimo</Th>
-                                    <Th>Alerta</Th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {stocks.map((stock) => {
-                                    const alerta = evaluarAlertaStock({
-                                        cantidadDisponible: stock.cantidadDisponible,
-                                        stockMinimo: stock.stockMinimo,
-                                        fechaCaducidad: stock.fechaCaducidad
-                                    });
-                                    return (
-                                        <tr key={stock.id}>
-                                            <Td>{stock.bodega.centro.nombre}</Td>
-                                            <Td>{stock.bodega.nombre}</Td>
-                                            <Td>{stock.producto.descripcion}</Td>
-                                            <Td>{stock.producto.linea}</Td>
-                                            <Td>{stock.lote}</Td>
-                                            <Td>{formatDate(stock.fechaCaducidad)}</Td>
-                                            <Td>{formatNumber(stock.cantidadDisponible)}</Td>
-                                            <Td>{formatNumber(stock.stockMinimo)}</Td>
-                                            <Td>
-                                                <Badge tone={alertaTone(alerta)}>{alertaLabel(alerta)}</Badge>
-                                            </Td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </Table>
+                        <StockTable
+                            stocks={data.stocks}
+                            sort={data.sort}
+                            direction={data.direction}
+                            centroId={data.centroId}
+                            bodegaId={data.bodegaId}
+                            busqueda={data.busqueda}
+                        />
                     </CardContent>
                 </Card>
             </div>
@@ -76,22 +69,16 @@ export default async function StockPage(): Promise<React.ReactElement> {
     );
 }
 
-function alertaTone(alerta: string): "success" | "warning" | "danger" | "muted" {
-    if (alerta === "sin_stock") {
-        return "danger";
-    }
-    if (alerta === "stock_minimo" || alerta === "caducidad_proxima") {
-        return "warning";
-    }
-    return "success";
+function obtenerParam(params: Record<string, string | string[] | undefined> | undefined, key: string): string | undefined {
+    const value = params?.[key];
+    return Array.isArray(value) ? value[0] : value;
 }
 
-function alertaLabel(alerta: string): string {
-    const labels: Record<string, string> = {
-        sin_stock: "Sin stock",
-        stock_minimo: "Stock minimo",
-        caducidad_proxima: "Caducidad proxima",
-        ok: "OK"
-    };
-    return labels[alerta] ?? "OK";
+function obtenerSort(value: string | undefined): StockSortKey | undefined {
+    const permitidos: StockSortKey[] = ["centro", "bodega", "producto", "linea", "disponible", "minimo", "alerta"];
+    return permitidos.includes(value as StockSortKey) ? value as StockSortKey : undefined;
+}
+
+function obtenerDirection(value: string | undefined): SortDirection | undefined {
+    return value === "desc" ? "desc" : value === "asc" ? "asc" : undefined;
 }

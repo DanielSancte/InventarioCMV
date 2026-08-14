@@ -19,6 +19,13 @@ export async function listarProductos() {
     });
 }
 
+export async function listarProductosActivos() {
+    return prisma.producto.findMany({
+        where: { estado: true },
+        orderBy: [{ linea: "asc" }, { descripcion: "asc" }]
+    });
+}
+
 export async function crearProducto(prevState: ActionState, formData: FormData): Promise<ActionState> {
     try {
         const user = await requireSessionUser();

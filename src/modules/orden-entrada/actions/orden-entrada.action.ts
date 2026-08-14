@@ -5,6 +5,7 @@ import type { PrismaClient } from "@prisma/client";
 
 // lib
 import { requireSessionUser, puedeOperarEntrada } from "@/shared/lib/auth";
+import { validarCentroBodegaEnAlcance } from "@/shared/lib/inventario-alcance";
 import { AuditLogger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 
@@ -13,6 +14,9 @@ import { crearOrdenEntradaSchema, ordenEntradaDetalleFormSchema } from "@/module
 
 // types
 import type { ActionState } from "@/shared/types/action-state";
+
+// utils
+import { calcularStockMinimo } from "@/modules/stock/utils/movimientos";
 
 type Tx = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">;
 
@@ -24,7 +28,16 @@ interface DetalleEntradaForm {
 }
 
 export async function listarOrdenesEntrada() {
+    const user = await requireSessionUser();
+    const desde = new Date();
+    desde.setHours(0, 0, 0, 0);
+    desde.setDate(desde.getDate() - 90);
+
     return prisma.ordenEntrada.findMany({
+        where: {
+            usuarioId: user.id,
+            fecha: { gte: desde }
+        },
         include: {
             usuario: true,
             centro: true,
@@ -53,6 +66,7 @@ export async function crearOrdenEntrada(prevState: ActionState, formData: FormDa
             codigoRecepcion: formData.get("codigoRecepcion")?.toString() || undefined,
             detalles: leerDetallesEntrada(formData)
         });
+        await validarCentroBodegaEnAlcance(parsed.centroId, parsed.bodegaId);
         const categoriasPorProducto = await obtenerCategoriasProductos(parsed.detalles.map((detalle) => detalle.productoId));
 
         const orden = await prisma.$transaction(async (tx) => {
@@ -223,6 +237,19 @@ async function aplicarEntradaStock(
     tx: Tx,
     input: { productoId: number; bodegaId: string; cantidad: number; lote: string; fechaCaducidad: Date }
 ): Promise<void> {
+    const stockExistente = await tx.stock.findUnique({
+        where: {
+            stock_lote_unico: {
+                productoId: input.productoId,
+                bodegaId: input.bodegaId,
+                lote: input.lote,
+                fechaCaducidad: input.fechaCaducidad
+            }
+        },
+        select: { cantidadDisponible: true }
+    });
+    const nuevaCantidad = (stockExistente?.cantidadDisponible ?? 0) + input.cantidad;
+
     await tx.stock.upsert({
         where: {
             stock_lote_unico: {
@@ -234,13 +261,14 @@ async function aplicarEntradaStock(
         },
         update: {
             cantidadDisponible: { increment: input.cantidad },
+            stockMinimo: calcularStockMinimo(nuevaCantidad),
             fechaUltimaActualizacion: new Date()
         },
         create: {
             productoId: input.productoId,
             bodegaId: input.bodegaId,
             cantidadDisponible: input.cantidad,
-            stockMinimo: 0,
+            stockMinimo: calcularStockMinimo(input.cantidad),
             lote: input.lote,
             fechaCaducidad: input.fechaCaducidad,
             fechaUltimaActualizacion: new Date()
